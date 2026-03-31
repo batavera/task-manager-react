@@ -122,6 +122,17 @@ export function Dashboard() {
                 <input
                   value={textoEditado}
                   onChange={(e) => setTextoEditado(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && textoEditado.trim()) {
+                        salvarEdicao(tarefa.id)
+                    }
+                    
+                    if (e.key === "Escape") {
+                        setEditandoTarefaId(null)
+                        setTextoEditado("")
+                    }
+                  }}
+                  autofocus
                 />
                 <button onClick={() => salvarEdicao(tarefa.id)}>
                   Salvar
