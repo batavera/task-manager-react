@@ -88,6 +88,11 @@ export function Dashboard() {
           placeholder="Nova tarefa"
           value={novaTarefa}
           onChange={(e) => setNovaTarefa(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !loading) {
+                adicionarTarefa()
+            }
+          }}
           style={{ flex: 1 }}
         />
 
