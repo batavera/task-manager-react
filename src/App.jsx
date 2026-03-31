@@ -7,7 +7,7 @@ import "./App.css"
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/task-manager-react">
       <Routes>
         <Route path="/" element={<Login />} />
         <Route
