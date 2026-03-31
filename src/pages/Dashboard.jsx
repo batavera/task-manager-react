@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { TaskItem } from "../components/TaskItem"
 import {
   getTarefas,
   criarTarefa,
@@ -15,42 +14,57 @@ export function Dashboard() {
   const [novaTarefa, setNovaTarefa] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const [editandoTarefaId, setEditandoTarefaId] = useState(null)
+  const [textoEditado, setTextoEditado] = useState("")
+
   useEffect(() => {
     getTarefas().then(setTarefas)
   }, [])
 
-  function adicionarTarefa() {
-    if (novaTarefa.trim() === "") return
+  async function adicionarTarefa(e) {
+    e.preventDefault()
+
+    if (!novaTarefa.trim()) return
 
     setLoading(true)
 
-    criarTarefa({
-      texto: novaTarefa,
-      concluida: false
-    })
-      .then(nova => {
-        setTarefas(prev => [...prev, nova])
-        setNovaTarefa("")
+    try {
+      const nova = await criarTarefa({
+        texto: novaTarefa,
+        concluida: false
       })
-      .finally(() => setLoading(false))
+
+      setTarefas(prev => [...prev, nova])
+      setNovaTarefa("")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function salvarEdicao(id, novoTexto) {
+  function iniciarEdicao(tarefa) {
+    setEditandoTarefaId(tarefa.id)
+    setTextoEditado(tarefa.texto)
+  }
+
+  async function salvarEdicao(id) {
     const tarefa = tarefas.find(t => t.id === id)
 
-    atualizarTarefa(id, {
+    const atualizada = await atualizarTarefa(id, {
       ...tarefa,
-      texto: novoTexto
-    }).then(atualizada => {
-      setTarefas(prev =>
-        prev.map(t => (t.id === id ? atualizada : t))
-      )
+      texto: textoEditado
     })
+
+    setTarefas(tarefas.map(t =>
+      t.id === id ? atualizada : t
+    ))
+
+    setEditandoTarefaId(null)
+    setTextoEditado("")
   }
 
   function removerTarefa(id) {
     deletarTarefa(id).then(() => {
-      setTarefas(prev => prev.filter(t => t.id !== id))
+      setTarefas(tarefas.filter(t => t.id !== id))
     })
   }
 
@@ -61,9 +75,9 @@ export function Dashboard() {
       ...tarefa,
       concluida: !tarefa.concluida
     }).then(atualizada => {
-      setTarefas(prev =>
-        prev.map(t => (t.id === id ? atualizada : t))
-      )
+      setTarefas(tarefas.map(t =>
+        t.id === id ? atualizada : t
+      ))
     })
   }
 
@@ -73,7 +87,7 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ width: "400px" }}>
+    <div style={{ width: "400px", margin: "0 auto" }}>
       <h1 style={{ textAlign: "center" }}>Dashboard</h1>
 
       <button
@@ -83,33 +97,53 @@ export function Dashboard() {
         Sair
       </button>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+      {/* FORM = ENTER FUNCIONA AUTOMÁTICO */}
+      <form
+        onSubmit={adicionarTarefa}
+        style={{ display: "flex", gap: "10px", marginBottom: "15px" }}
+      >
         <input
           placeholder="Nova tarefa"
           value={novaTarefa}
           onChange={(e) => setNovaTarefa(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !loading) {
-                adicionarTarefa()
-            }
-          }}
           style={{ flex: 1 }}
         />
 
-        <button onClick={adicionarTarefa} disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? "Adicionando..." : "Adicionar"}
         </button>
-      </div>
+      </form>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <ul>
         {tarefas.map(tarefa => (
-          <TaskItem
-            key={tarefa.id}
-            tarefa={tarefa}
-            onDelete={removerTarefa}
-            onToggle={toggleConcluida}
-            onEdit={salvarEdicao}
-          />
+          <li key={tarefa.id} style={{ marginBottom: "10px" }}>
+            {editandoTarefaId === tarefa.id ? (
+              <>
+                <input
+                  value={textoEditado}
+                  onChange={(e) => setTextoEditado(e.target.value)}
+                />
+                <button onClick={() => salvarEdicao(tarefa.id)}>
+                  Salvar
+                </button>
+              </>
+            ) : (
+              <span
+                onClick={() => toggleConcluida(tarefa.id)}
+                onDoubleClick={() => iniciarEdicao(tarefa)}
+                style={{
+                  textDecoration: tarefa.concluida ? "line-through" : "none",
+                  cursor: "pointer"
+                }}
+              >
+                {tarefa.texto}
+              </span>
+            )}
+
+            <button onClick={() => removerTarefa(tarefa.id)}>
+              X
+            </button>
+          </li>
         ))}
       </ul>
     </div>
