@@ -54,9 +54,9 @@ export function Dashboard() {
       texto: textoEditado
     })
 
-    setTarefas(tarefas.map(t =>
-      t.id === id ? atualizada : t
-    ))
+    setTarefas(prev =>
+        prev.map(t => (t.id === id ? atualizada : t))
+    )
 
     setEditandoTarefaId(null)
     setTextoEditado("")
